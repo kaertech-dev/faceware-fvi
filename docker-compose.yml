@@ -1,8 +1,8 @@
 services:
   traceability:
     build: .
-    image: energous_vi
-    container_name: energous_vi
+    image: faceware_fvi
+    container_name: faceware_fvi
     ports:
       - "5051:5051"
     restart: always
