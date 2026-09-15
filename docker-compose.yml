@@ -1,0 +1,10 @@
+services:
+  traceability:
+    build: .
+    image: energous_vi
+    container_name: energous_vi
+    ports:
+      - "5051:5051"
+    restart: always
+    environment:
+      - FLASK_ENV=production
