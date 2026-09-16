@@ -4,6 +4,9 @@ from app.config import Config
 from app.scan import finalize_scan, validate_scan
 
 scan_bp = Blueprint("scan", __name__)
+MAX_SERIAL_LENGTH = 100
+MAX_REMARKS_LENGTH = 500
+MAX_SHIFT_LENGTH = 20
 
 # ── Auth ──────────────────────────────────────────────────────────────────────
 
@@ -13,24 +16,24 @@ def login_page():
 
 @scan_bp.route("/api/login", methods=["POST"])
 def login():
-    data = request.get_json(force=True)
+    data = request.get_json(silent=True) or {}
     employee_num = (data.get("employee_num") or "").strip()
     if not employee_num:
         return jsonify({"ok": False, "message": "Employee number is required."}), 400
+    if len(employee_num) > MAX_SERIAL_LENGTH:
+        return jsonify({"ok": False, "message": "Employee number is too long."}), 400
 
     operator = authenticate_operator(employee_num)
     
     if not operator:
         attempts = session.get("login_attempt", 0) + 1
         session["login_attempt"] = attempts
-        if attempts >=3:
+        if Config.FUN_LOGIN_MESSAGES and attempts >= 6:
+            return jsonify({"ok": False, "message": "Inulit pa talaga nya!"}), 401
+        if Config.FUN_LOGIN_MESSAGES and attempts >= 3:
             return jsonify({
                 "ok": False, "message": "ang kulit mo, MALI NGANII!"
             }), 401
-        elif attempts >=6:
-            return jsonify({
-                            "ok": False, "message": "Inulit pa talaga nya!"
-                        }), 401
         return jsonify({"ok": False, "message": "Employee number not found.!!"}), 401
 
     session["login_attempt"] = 0
@@ -77,11 +80,13 @@ def api_scan():
     if "operator_en" not in session:
         return jsonify({"ok": False, "message": "Not authenticated."}), 401
 
-    data = request.get_json(force=True)
+    data = request.get_json(silent=True) or {}
     serial_num = (data.get("serial_num") or "").strip()
 
     if not serial_num:
         return jsonify({"ok": False, "message": "Serial number is required."}), 400
+    if len(serial_num) > MAX_SERIAL_LENGTH:
+        return jsonify({"ok": False, "message": "Serial number is too long."}), 400
 
     result = validate_scan(serial_num)
     ok = result["status"] == "ok"
@@ -94,7 +99,7 @@ def api_scan_decision():
     if "operator_en" not in session:
         return jsonify({"ok": False, "message": "Not authenticated."}), 401
 
-    data = request.get_json(force=True)
+    data = request.get_json(silent=True) or {}
     serial_num = (data.get("serial_num") or "").strip()
     decision   = (data.get("decision") or "").strip().lower()
     shift      = (data.get("shift") or "").strip()
@@ -102,10 +107,22 @@ def api_scan_decision():
 
     if not serial_num:
         return jsonify({"ok": False, "message": "Serial number is required."}), 400
+    if len(serial_num) > MAX_SERIAL_LENGTH:
+        return jsonify({"ok": False, "message": "Serial number is too long."}), 400
+    if len(shift) > MAX_SHIFT_LENGTH:
+        return jsonify({"ok": False, "message": "Shift is too long."}), 400
+    if len(remarks) > MAX_REMARKS_LENGTH:
+        return jsonify({"ok": False, "message": "Remarks are too long."}), 400
     if decision not in ("pass", "fail"):
         return jsonify({"ok": False, "message": "Decision must be 'pass' or 'fail'."}), 400
     if decision == "fail" and not remarks:
         return jsonify({"ok": False, "message": "Please enter a fail reason."}), 400
+    if session.get("tray_count", 0) >= Config.TRAY_LIMIT:
+        return jsonify({
+            "ok": False,
+            "status": "tray_full",
+            "message": "Tray limit reached. Start a new tray before scanning again.",
+        }), 409
 
     result = finalize_scan(
         serial_num=serial_num,
@@ -116,4 +133,6 @@ def api_scan_decision():
     )
 
     ok = result["status"] == "ok"
+    if ok:
+        session["tray_count"] = session.get("tray_count", 0) + 1
     return jsonify({"ok": ok, **result})

@@ -33,7 +33,7 @@ def failure_count(serial_num: str) -> int:
         """
         SELECT serial_num
         FROM ledtech.faceware_fvi
-        WHERE LEFT(serial_num, CHAR_LENGTH(%s)) = %s AND status = 0
+        WHERE (serial_num = %s OR serial_num LIKE CONCAT(%s, '\\_', '%')) AND status = 0
         """,
         (serial_num, serial_num),
     )

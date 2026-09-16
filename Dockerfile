@@ -29,5 +29,5 @@ COPY . .
 # Expose Flask port
 EXPOSE 5051
 
-# Run Flask app
-CMD ["python", "run.py"]
+# Run the production WSGI server
+CMD ["gunicorn", "-w", "2", "-b", "0.0.0.0:5051", "run:app"]

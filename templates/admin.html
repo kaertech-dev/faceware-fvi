@@ -181,7 +181,7 @@
 
   document.getElementById("btn-refresh").addEventListener("click", loadAll);
   document.getElementById("btn-logout").addEventListener("click", async () => {
-    await fetch("/admin/logout", { method: "POST" });
+    await fetch("/admin/logout", { method: "POST", headers: { "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]').content } });
     window.location.href = "/admin/login";
   });
 </script>

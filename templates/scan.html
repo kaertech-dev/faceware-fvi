@@ -136,7 +136,7 @@
 
     const res  = await fetch("/api/scan", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]').content },
       body: JSON.stringify({ serial_num: serial })//prog_id: verifiedProgId, 
     });
     const data = await res.json();
@@ -157,7 +157,7 @@
   async function submitDecision(decision, remarks = "") {
     const res  = await fetch("/api/scan-decision", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]').content },
       body: JSON.stringify({
         // prog_id: verifiedProgId,
         serial_num: verifiedSerial,
@@ -225,7 +225,7 @@
   });
 
   document.getElementById("btn-logout").addEventListener("click", async () => {
-    await fetch("/api/logout", { method: "POST" });
+    await fetch("/api/logout", { method: "POST", headers: { "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]').content } });
     window.location.href = "/login";
   });
 </script>
