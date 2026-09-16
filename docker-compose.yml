@@ -3,29 +3,6 @@ services:
     build: .
     image: faceware_fvi
     container_name: faceware_fvi
-    expose:
-      - "5051"
-    restart: always
-    environment:
-      - FLASK_ENV=production
-      - SECRET_KEY=${SECRET_KEY:?SECRET_KEY is required}
-      - ADMIN_PASSWORD=${ADMIN_PASSWORD:?ADMIN_PASSWORD is required}
-      - DB_HOST=${DB_HOST:?DB_HOST is required}
-      - DB_PORT=${DB_PORT:?DB_PORT is required}
-      - DB_USER=${DB_USER:?DB_USER is required}
-      - DB_PASSWORD=${DB_PASSWORD:?DB_PASSWORD is required}
-      - DB_NAME=${DB_NAME:?DB_NAME is required}
-      - FORCE_HTTPS=${FORCE_HTTPS:-true}
-      - SESSION_COOKIE_SECURE=${SESSION_COOKIE_SECURE:-true}
-  nginx:
-    image: nginx:1.27-alpine
-    container_name: faceware_fvi_nginx
-    depends_on:
-      - traceability
     ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
-      - ./nginx/certs:/etc/nginx/certs:ro
+      - "5051"
     restart: always
